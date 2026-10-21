@@ -16,11 +16,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { kebabCase, upperFirst } from 'lodash-es';
 
 import type { MutateDataParam, MutateDataPropertiesWithRequiredProperties } from '../../lib/utils/object.ts';
 import { normalizePathEnd } from '../../lib/utils/path.ts';
-import { pluralize } from '../../lib/utils/string-utils.ts';
+import { kebabCase, pluralize, upperFirst } from '../../lib/utils/string-utils.ts';
 import { upperFirstCamelCase } from '../../lib/utils/string.ts';
 import type { Relationship as BaseApplicationRelationship } from '../base-application/types.d.ts';
 import type { Entity as CommonEntity, Field as CommonField, Relationship as CommonRelationship } from '../common/types.ts';
@@ -85,6 +84,16 @@ type ClientAddedEntityProperties = {
   entityPage?: string;
 
   tsKeyType?: string;
+  /** The fields of the entity model, with their TypeScript types. */
+  entityClientFields?: string[];
+  /** The types the entity model imports, by name. */
+  entityClientImports?: Map<string, string>;
+  /** The default values of the fields of the entity model. */
+  entityClientFieldDefaultValues?: Record<string, string>;
+  /** The enums the entity model imports, by name. */
+  entityModelEnumImports?: Map<string, string>;
+  /** The enums the entity update form imports, by name. */
+  entityClientEnumImports?: Map<string, string>;
   tsSampleWithPartialData?: string;
   tsSampleWithRequiredData?: string;
   tsSampleWithFullData?: string;

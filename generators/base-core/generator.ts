@@ -24,10 +24,12 @@ import { relative as posixRelative } from 'node:path/posix';
 import { requireNamespace } from '@yeoman/namespace';
 import chalk from 'chalk';
 import latestVersion from 'latest-version';
-import { get, kebabCase, merge, mergeWith, set, snakeCase } from 'lodash-es';
+import get from 'lodash-es/get.js';
+import merge from 'lodash-es/merge.js';
+import set from 'lodash-es/set.js';
 import semver, { lt as semverLessThan } from 'semver';
 import type { PackageJson, SetRequired } from 'type-fest';
-import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
+import { stringify as stringifyYaml } from 'yaml';
 import type Environment from 'yeoman-environment';
 import YeomanGenerator, { type ComposeOptions, type Storage, type Task } from 'yeoman-generator';
 
@@ -57,6 +59,7 @@ import {
   normalizeLineEndings,
   removeFieldsWithNullishValues,
 } from '../../lib/utils/index.ts';
+import { kebabCase, snakeCase } from '../../lib/utils/string-utils.ts';
 import baseCommand from '../base/command.ts';
 import type BaseGenerator from '../base/generator.ts';
 import { dockerPlaceholderGenerator } from '../docker/utils.ts';
@@ -74,7 +77,7 @@ import type {
   WriteContext,
   WriteFileOptions,
 } from './api.ts';
-import { convertWriteFileSectionsToBlocks, loadConfig, optionsForAnotherProject } from './internal/index.ts';
+import { convertWriteFileSectionsToBlocks, loadConfig, mergeYamlContent, optionsForAnotherProject } from './internal/index.ts';
 import { createJHipster7Context } from './internal/jhipster7-context.ts';
 import {
   CUSTOM_PRIORITIES,
@@ -113,8 +116,10 @@ const relativeDir = (from: string, to: string) => {
   return rel ? `${rel}/` : '';
 };
 
-const deepMerge = (source1: any, source2: any) =>
-  mergeWith({}, source1, source2, (a, b) => (Array.isArray(a) ? [...a, ...(Array.isArray(b) ? b : [b])] : undefined));
+/**
+ * The utilities given to the templates in their data.
+ */
+const templateUtilities = { relativeDir };
 
 /**
  * This is the base class for a generator for every generator.
@@ -210,6 +215,17 @@ export default class CoreGenerator<
           ]
         ),
     });
+
+    if (this.options.namespace?.startsWith('jhipster:') && this.features.templateContext === undefined) {
+      // The templates of JHipster read only their data, the generator is not their context: reading it throws in the
+      // tests. Blueprints keep the generator as the context of their templates.
+      const { reproducibleTests } = this.options as { reproducibleTests?: boolean };
+      this.setFeatures({ templateContext: reproducibleTests ? 'throw' : 'none' } as Features);
+    }
+    if (this.options.namespace?.startsWith('jhipster:')) {
+      // The JHipster generators import the lodash functions they use: reading this._ throws.
+      this.setFeatures({ disableLodashProperty: true } as Features);
+    }
 
     if (!this.options.help) {
       /* Force config to use 'generator-jhipster' namespace. */
@@ -963,14 +979,16 @@ You can ignore this error by passing '--skip-checks' to jhipster command.`);
   writeFile(
     source: string,
     destination: string,
-    data: Parameters<CoreGenerator['renderTemplate']>[2] = this,
+    data?: Parameters<CoreGenerator['renderTemplate']>[2],
     copyOptions: Parameters<CoreGenerator['renderTemplate']>[3] = {},
   ) {
     // Convert to any because ejs types doesn't support string[] https://github.com/DefinitelyTyped/DefinitelyTyped/pull/63315
 
     const root: any = this.jhipsterTemplatesFolders ?? this.templatePath();
+    // Without data, the generator is the data of the template.
+    const templateData = data === undefined ? (this as any) : { ...templateUtilities, ...(data as object) };
     try {
-      return this.renderTemplate(source, destination, data, {
+      return this.renderTemplate(source, destination, templateData, {
         noGlob: true,
         ...copyOptions,
         transformOptions: { root, ...copyOptions.transformOptions },
@@ -990,7 +1008,8 @@ You can ignore this error by passing '--skip-checks' to jhipster command.`);
     assert(paramCount > 0, 'One of sections, blocks or templates is required');
     assert(paramCount === 1, 'Only one of sections, blocks or templates must be provided');
 
-    let templateData: DataType = options.context ?? ({} as DataType);
+    // The templates get the utilities they call in their data.
+    let templateData: DataType = { ...templateUtilities, ...(options.context as object | undefined) } as DataType;
     const { rootTemplatesPath, customizeTemplatePath = file => file, transform: methodTransform = [] } = options;
     const startTime = new Date().getMilliseconds();
     const { customizeTemplatePaths: contextCustomizeTemplatePaths = [] } = templateData as WriteContext;
@@ -1026,6 +1045,9 @@ You can ignore this error by passing '--skip-checks' to jhipster command.`);
     }
 
     const normalizeEjs = (file: string) => file.replace('.ejs', '');
+    const { reproducibleTests } = this.options as { reproducibleTests?: boolean };
+    const { templateContext } = this.features;
+    const jhipsterGenerator = this.options.namespace?.startsWith('jhipster:');
     const resolveCallback = <ReturnType extends boolean | string | undefined>(
       maybeCallback: ReturnType | ((data: any) => ReturnType),
     ): ReturnType => {
@@ -1148,9 +1170,10 @@ templates: ${JSON.stringify(existingTemplates, null, 2)}`;
             ...options?.renderOptions,
             // Set root for ejs to lookup for partials.
             root: templatesRoots,
-            // Caching is not applicable for JHipster: the generator is passed as `context`, and ejs caches it
-            // together with the compiled template function.
-            cache: false,
+            // The ejs cache keeps the context of the generator that compiled a template, and it brings no gain to a
+            // generation. The tests render the same templates many times: it is enabled for the templates of JHipster
+            // generators rendered without a context.
+            cache: Boolean(reproducibleTests && jhipsterGenerator) && (templateContext === 'none' || templateContext === 'throw'),
           };
           const copyOptions = { noGlob: true, transformOptions, metadata };
           this.renderTemplate(appendEjs ? `${sourceFileFrom}.ejs` : sourceFileFrom, targetFile, templateData as any, copyOptions);
@@ -1379,25 +1402,11 @@ templates: ${JSON.stringify(existingTemplates, null, 2)}`;
   }
 
   /**
-   * Merge value to an existing yaml and write to destination
-   * Removes every comment (due to parsing/merging process) except the at the top of the file.
+   * Merge value to an existing yaml and write to destination, keeping the rest of the yaml as written, its comments and
+   * its style included.
    */
   mergeDestinationYaml(filepath: string, value: Record<string | number, any>) {
-    this.editFile(filepath, content => {
-      const lines = content.split('\n');
-      const headerComments: string[] = [];
-      lines.find(line => {
-        if (line.startsWith('#')) {
-          headerComments.push(line);
-          return false;
-        }
-        return true;
-      });
-
-      const mergedContent = stringifyYaml(deepMerge(parseYaml(content), value));
-      const header = headerComments.length > 0 ? headerComments.join('\n').concat('\n') : '';
-      return `${header}${mergedContent}`;
-    });
+    this.editFile(filepath, content => mergeYamlContent(content, value));
   }
 
   /**

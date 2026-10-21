@@ -18,3 +18,9 @@
  */
 export const SERVICE_HEALTHY = 'service_healthy';
 export const SERVICE_COMPLETED_SUCCESSFULLY = 'service_completed_successfully';
+
+/**
+ * The folder, in the generators of JHipster, of the templates of the docker compose files of the applications: their
+ * static parts, which the deployments merge with the data of the applications too.
+ */
+export const DOCKER_COMPOSE_SOURCES_DIR = 'docker/templates/docker';

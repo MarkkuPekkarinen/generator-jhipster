@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-import { before, describe, expect, it } from 'esmocha';
+import { before, describe, expect, it } from 'expect-node';
 import { basename, resolve } from 'node:path';
 
 import Generator from './index.ts';
@@ -27,7 +27,7 @@ import { defaultHelpers as helpers, runResult } from '#testing';
 
 const generator = `${basename(resolve(import.meta.dirname, '../../'))}:${basename(import.meta.dirname)}`;
 
-describe(`generator - feign-client`, () => {
+describe(`generator - ${generator}`, () => {
   shouldSupportFeatures(Generator);
   describe('blueprint support', () => testBlueprintSupport(generator));
   checkEnforcements({}, generator);

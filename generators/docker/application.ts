@@ -19,24 +19,38 @@
 import type { MutateDataParam, MutateDataPropertiesWithRequiredProperties } from '../../lib/utils/object.ts';
 import { JAVA_DOCKER_DIR } from '../generator-constants.ts';
 
-import type { Application as DockerApplication } from './types.ts';
+import type { Application as DockerApplication, DockerComposeFile } from './types.ts';
 
 export type DockerAddedApplicationLoadingProperties = {
   dockerContainers: Record<string, string>;
   dockerApplicationEnvironment: Record<string, string>;
+  /**
+   * The variables of the application in a deployment, over `dockerApplicationEnvironment`: the ones naming the hosts of
+   * its services, which a deployment names `<application>-<service>`.
+   */
+  dockerDeploymentEnvironment: Record<string, string>;
   dockerServices: string[];
+  /**
+   * The docker compose files of the application a deployment uses, by name: the docker generator writes them to
+   * `dockerServicesDir`, the deployments read them from their source merged with their data.
+   */
+  dockerComposeFiles: Record<string, DockerComposeFile>;
   keycloakSecrets?: string[];
 };
 
 export type DockerAddedApplicationPreparingProperties = {
   dockerServicesDir: string;
+  /** The prefix of the names a deployment gives the docker compose services of the application. */
+  dockerDeploymentServicePrefix: string;
 };
 
 export const mutateApplicationLoading = {
   __override__: false,
   dockerContainers: () => ({}),
   dockerApplicationEnvironment: () => ({}),
+  dockerDeploymentEnvironment: () => ({}),
   dockerServices: () => [],
+  dockerComposeFiles: () => ({}),
 } as const satisfies MutateDataPropertiesWithRequiredProperties<
   MutateDataParam<DockerApplication>,
   DockerAddedApplicationLoadingProperties
@@ -45,6 +59,7 @@ export const mutateApplicationLoading = {
 export const mutateApplicationPreparing = {
   __override__: false,
   dockerServicesDir: JAVA_DOCKER_DIR,
+  dockerDeploymentServicePrefix: ({ lowercaseBaseName }) => `${lowercaseBaseName}-`,
 } as const satisfies MutateDataPropertiesWithRequiredProperties<
   MutateDataParam<DockerApplication>,
   DockerAddedApplicationPreparingProperties

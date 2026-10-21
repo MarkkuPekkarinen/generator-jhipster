@@ -17,13 +17,14 @@
  * limitations under the License.
  */
 import chalk from 'chalk';
-import { camelCase, lowerFirst, uniqBy } from 'lodash-es';
+import uniqBy from 'lodash-es/uniqBy.js';
 
 import { getEntityDerivedPropertyMutations } from '../../lib/command/mutations.ts';
 import { APPLICATION_TYPE_MICROSERVICE } from '../../lib/core/application-types.ts';
 import type { FieldType } from '../../lib/jhipster/field-types.ts';
 import { cacheTypes, databaseTypes, fieldTypes, searchEngineTypes, testFrameworkTypes, websocketTypes } from '../../lib/jhipster/index.ts';
 import { mutateData } from '../../lib/utils/index.ts';
+import { camelCase, lowerFirst } from '../../lib/utils/string-utils.ts';
 import BaseApplicationGenerator from '../base-application/index.ts';
 import { createNeedleCallback, isWin32 } from '../base-core/support/index.ts';
 import { editPropertiesFileCallback } from '../base-core/support/properties-file.ts';
@@ -583,6 +584,44 @@ ${classProperties
           for (const field of primaryKey.fields) {
             field.fieldJavaValueGenerator = getJavaValueGeneratorForType(field.fieldType);
           }
+        }
+      },
+      prepareTestTextValues({ entity }) {
+        // The text values of the resource integration test: the minimum and maximum lengths respected, matching the pattern.
+        entity.resetFakerSeed?.('resource-it');
+        for (const field of entity.fields) {
+          if (!field.fieldTypeString && !field.blobContentTypeText) continue;
+          let sampleTextLength = 10;
+          if (field.fieldValidateRulesMinlength! > sampleTextLength) {
+            sampleTextLength = field.fieldValidateRulesMinlength!;
+          }
+          if (field.fieldValidateRulesMaxlength! < sampleTextLength) {
+            sampleTextLength = field.fieldValidateRulesMaxlength!;
+          }
+          let sampleTextString = 'A'.repeat(sampleTextLength);
+          let updatedTextString = 'B'.repeat(sampleTextLength);
+          if (field.fieldValidateRulesPattern !== undefined) {
+            try {
+              const patternRegExp = new RegExp(field.fieldValidateRulesPattern);
+              if (!patternRegExp.test(sampleTextString.replace(/\\"/g, '"').replace(/\\\\/g, '\\'))) {
+                sampleTextString = field.generateFakeDataFromPattern!()!.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+              }
+              if (!patternRegExp.test(updatedTextString.replace(/\\"/g, '"').replace(/\\\\/g, '\\'))) {
+                updatedTextString = field.generateFakeDataFromPattern!()!.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+              }
+            } catch (error) {
+              this.log.warn(
+                `Error generating test value for entity "${entity.entityClass}" field "${field.fieldName}" with pattern "${field.fieldValidateRulesPattern}", generating default values for this field. Detailed error message: "${(error as Error).message}".`,
+              );
+            }
+            if (sampleTextString === updatedTextString) {
+              updatedTextString = `${updatedTextString}B`;
+              this.log.warn(
+                `Randomly generated first and second test values for entity "${entity.entityClass}" field "${field.fieldName}" with pattern "${field.fieldValidateRulesPattern}" in file "${entity.entityClass}ResourceIT" where equal, added symbol "B" to second value.`,
+              );
+            }
+          }
+          mutateData(field, { __override__: false, sbTestSampleText: sampleTextString, sbTestUpdatedText: updatedTextString });
         }
       },
       prepareFilters({ application, entity }) {

@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-import { after, afterEach, before, beforeEach, describe, esmocha, expect, it, resetAllMocks } from 'esmocha';
+import { after, afterEach, before, beforeEach, describe, exnode, expect, it, resetAllMocks } from 'expect-node';
 import assert from 'node:assert';
 import { fork } from 'node:child_process';
 import { join } from 'node:path';
@@ -121,13 +121,13 @@ export const command = {
 
 describe('cli', () => {
   const jhipsterCli = join(import.meta.dirname, '..', 'bin', 'jhipster.cjs');
-  const logger = { verboseInfo: esmocha.fn(), warn: esmocha.fn(), fatal: esmocha.fn(), debug: esmocha.fn() };
-  const getCommand = esmocha.fn<typeof actualGetCommand>();
+  const logger = { verboseInfo: exnode.fn(), warn: exnode.fn(), fatal: exnode.fn(), debug: exnode.fn() };
+  const getCommand = exnode.fn<typeof actualGetCommand>();
   let mockCli: (argv: string[], opts?: Record<string, any>) => Promise<JHipsterCommand>;
   let argv: string[];
 
   before(async () => {
-    await esmocha.mock('./utils.ts', { logger, getCommand, CLI_NAME: 'jhipster', done: () => {} });
+    await exnode.mock('./utils.ts', { logger, getCommand, CLI_NAME: 'jhipster', done: () => {} }, { reimport: true });
     const { buildJHipster } = await import('./program.ts');
 
     mockCli = async (argv: string[], opts = {}) => {
@@ -141,7 +141,7 @@ describe('cli', () => {
     };
   });
   after(() => {
-    esmocha.reset();
+    exnode.resetModules();
   });
 
   beforeEach(async () => {
@@ -231,14 +231,14 @@ describe('cli', () => {
       const BaseGenerator = (await import('../generators/base/index.ts')).default;
       env = await helpers.createTestEnv();
       generator = new (helpers.createDummyGenerator(BaseGenerator))([], { env });
-      env.run = esmocha.fn<typeof env.run>((...args) => {
+      env.run = exnode.fn<typeof env.run>((...args) => {
         runArgs = args;
         return Promise.resolve();
       });
-      const composeWithSpy = esmocha.spyOn(env, 'composeWith');
+      const composeWithSpy = exnode.spyOn(env, 'composeWith');
       composeWithSpy.mockImplementation(async () => undefined as unknown as BaseGenerator);
       const originalGetGeneratorMeta = env.getGeneratorMeta.bind(env);
-      const getGeneratorMetaSpy = esmocha.spyOn(env, 'getGeneratorMeta');
+      const getGeneratorMetaSpy = exnode.spyOn(env, 'getGeneratorMeta');
       getGeneratorMetaSpy.mockImplementation((namespace: string): GeneratorMeta | undefined => {
         if (namespace === 'jhipster:mocked') {
           return {
@@ -280,14 +280,14 @@ describe('cli', () => {
       });
 
       it('should not give the builder of its environment to the command', async () => {
-        await mockCli(argv, { commands, env, createEnvBuilder: esmocha.fn<any>() });
+        await mockCli(argv, { commands, env, createEnvBuilder: exnode.fn<any>() });
         const [, options] = runArgs;
         expect(options.createEnvBuilder).toBeUndefined();
       });
 
       for (const cliCommand of ['jdl', 'upgrade']) {
         it(`should give the builder of its environment to the ${cliCommand} command, which runs generators in other environments`, async () => {
-          const createEnvBuilder = esmocha.fn<any>();
+          const createEnvBuilder = exnode.fn<any>();
           await mockCli(['jhipster', 'jhipster', cliCommand], { env, createEnvBuilder });
           const [command, options] = runArgs;
           expect(command).toEqual(`jhipster:${cliCommand}`);
@@ -305,7 +305,7 @@ describe('cli', () => {
       });
 
       it('should pass the jdl definitions of getJDLDefinitions', async () => {
-        const getJDLDefinitions = esmocha.fn(({ defaults }: { defaults: JDLDefinitions; commandsConfigs: JHipsterConfigs }) => ({
+        const getJDLDefinitions = exnode.fn(({ defaults }: { defaults: JDLDefinitions; commandsConfigs: JHipsterConfigs }) => ({
           entity: defaults.entity,
         }));
         await mockCli(argv, { commands, env, getJDLDefinitions });
@@ -578,13 +578,13 @@ describe('cli', () => {
     describe('loading options', () => {
       describe('using blueprint with cli option', () => {
         let stdout: string;
-        beforeEach(async () => {
+        before(async () => {
           await helpers
             .prepareTemporaryDir()
             .withFiles(createBlueprintFiles('generator-jhipster-cli', { files: cliBlueprintFiles }))
             .commitFiles();
         });
-        beforeEach(done => {
+        before(done => {
           const forked = fork(jhipsterCli, ['foo', '--blueprints', 'cli', '--help'], { stdio: 'pipe' });
           forked.on('exit', () => {
             stdout = forked.stdout?.read().toString();
@@ -603,13 +603,13 @@ describe('cli', () => {
 
       describe('using blueprint with custom generator option', () => {
         let stdout: string;
-        beforeEach(async () => {
+        before(async () => {
           await helpers
             .prepareTemporaryDir()
             .withFiles(createBlueprintFiles('generator-jhipster-cli-shared', { generator: 'foo', files: cliSharedBlueprintFiles }))
             .commitFiles();
         });
-        beforeEach(done => {
+        before(done => {
           const forked = fork(jhipsterCli, ['bar', '--blueprints', 'cli-shared', '--help'], { stdio: 'pipe' });
           forked.on('exit', () => {
             stdout = forked.stdout?.read().toString();
@@ -705,13 +705,13 @@ export const command = {
       describe('--help', () => {
         let stdout: string;
         let exitCode: number | null;
-        beforeEach(async () => {
+        before(async () => {
           await helpers
             .prepareTemporaryDir()
             .withFiles(createBlueprintFiles('generator-jhipster-cli', { files: cliBlueprintFiles }))
             .commitFiles();
         });
-        beforeEach(done => {
+        before(done => {
           const forked = fork(jhipsterCli, ['run', 'cli:foo', '--help'], { stdio: 'pipe' });
           forked.on('exit', code => {
             exitCode = code;
@@ -734,13 +734,13 @@ export const command = {
       describe('running it', () => {
         let stdout: string;
         let exitCode: number | null;
-        beforeEach(async () => {
+        before(async () => {
           await helpers
             .prepareTemporaryDir()
             .withFiles(createBlueprintFiles('generator-jhipster-cli', { files: cliBlueprintFiles }))
             .commitFiles();
         });
-        beforeEach(done => {
+        before(done => {
           const forked = fork(jhipsterCli, ['run', 'cli:foo', '--foo-bar'], { stdio: 'pipe' });
           forked.on('exit', code => {
             exitCode = code;

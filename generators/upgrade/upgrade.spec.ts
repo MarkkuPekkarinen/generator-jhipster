@@ -17,14 +17,14 @@
  * limitations under the License.
  */
 
-import { before, describe, expect, it } from 'esmocha';
+import { before, describe, expect, it } from 'expect-node';
 import { type PathOrFileDescriptor, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { execaSync } from 'execa';
-import { escapeRegExp } from 'lodash-es';
 
 import { packageJson } from '../../lib/index.ts';
+import { escapeRegExp } from '../../lib/utils/string-utils.ts';
 
 import { result as runResult, skipPrettierHelpers as helpers } from '#testing';
 

@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-import { before, describe, expect, it } from 'esmocha';
+import { before, describe, expect, it } from 'expect-node';
 import { join, resolve } from 'node:path';
 import { stripVTControlCharacters } from 'node:util';
 
@@ -607,6 +607,27 @@ describe('generator - Docker Compose', () => {
       runResult.assertNoFileContent('docker-compose/docker-compose.yml', /container_name:/);
       runResult.assertNoFileContent('docker-compose/docker-compose.yml', /external_links:/);
       runResult.assertNoFileContent('docker-compose/docker-compose.yml', /links:/);
+    });
+  });
+
+  describe('monolith and an application of a type of a blueprint', () => {
+    before(async () => {
+      await helpers
+        .generateDeploymentWorkspaces()
+        .withWorkspaceApplicationAtFolder('mobile', { baseName: 'mobile', applicationType: 'expo' })
+        .withWorkspacesSamples('08-monolith')
+        .withGenerateWorkspaceApplications();
+
+      await helpers.runJHipsterDeployment(GENERATOR_DOCKER_COMPOSE).withAnswers({
+        deploymentApplicationType: APPLICATION_TYPE_MONOLITH,
+        directoryPath: '../',
+        appsFolders: ['mobile', '08-monolith'],
+        clusteredDbApps: [],
+      });
+    });
+    it('should deploy the monolith only', () => {
+      runResult.assertFileContent('docker-compose/docker-compose.yml', /samplemysql:/);
+      runResult.assertNoFileContent('docker-compose/docker-compose.yml', /mobile/);
     });
   });
 

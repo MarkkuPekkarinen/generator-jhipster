@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-import { before, beforeEach, describe, expect, it } from 'esmocha';
+import { before, beforeEach, describe, expect, it } from 'expect-node';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -119,6 +119,62 @@ describe('generator - base-core', () => {
       expect(base.jdlFiles[0]).toBe('foo');
     });
   });
+  describe('writeFiles template data', () => {
+    const RelativeDirGenerator = helpers.createDummyGenerator(Base, {
+      async [Base.WRITING]() {
+        await this.writeFiles({
+          blocks: [{ templates: ['relative.txt'] }],
+          context: { from: 'a', to: 'a/b' },
+          rootTemplatesPath: this.destinationPath('templates'),
+        });
+      },
+    });
+
+    before(async () => {
+      await helpers
+        .run('dummy')
+        .withGenerators([[RelativeDirGenerator, { namespace: 'dummy' }]])
+        .doInDir(cwd => {
+          mkdirSync(join(cwd, 'templates'));
+          writeFileSync(join(cwd, 'templates/relative.txt.ejs'), '<%- relativeDir(from, to) %>');
+        });
+    });
+
+    it('should give relativeDir to the templates', () => {
+      expect(runResult.memFs.get(runResult.generator.destinationPath('relative.txt')).contents?.toString()).toBe('b/');
+    });
+  });
+
+  describe('templates context', () => {
+    const ThisGenerator = helpers.createDummyGenerator(Base, {
+      async [Base.WRITING]() {
+        await this.writeFiles({
+          blocks: [{ templates: ['this.txt'] }],
+          context: {},
+          rootTemplatesPath: this.destinationPath('templates'),
+        });
+      },
+    });
+    const runWithNamespace = (namespace: string) =>
+      helpers
+        .run(namespace)
+        .withGenerators([[ThisGenerator, { namespace }]])
+        .withOptions({ reproducibleTests: true })
+        .doInDir(cwd => {
+          mkdirSync(join(cwd, 'templates'));
+          writeFileSync(join(cwd, 'templates/this.txt.ejs'), '<%- this.options.namespace %>');
+        });
+
+    it('should not give the generator to the templates of a JHipster generator', async () => {
+      await expect(runWithNamespace('jhipster:dummy')).rejects.toThrow('reads this.options');
+    });
+
+    it('should give the generator to the templates of a blueprint', async () => {
+      await runWithNamespace('jhipster-foo:dummy');
+      expect(runResult.memFs.get(runResult.generator.destinationPath('this.txt')).contents?.toString()).toBe('jhipster-foo:dummy');
+    });
+  });
+
   describe('writeFiles with override false', () => {
     const OverrideGenerator = helpers.createDummyGenerator(Base, {
       async [Base.WRITING]() {

@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-import { intersection } from 'lodash-es';
+import intersection from 'lodash-es/intersection.js';
 
 import { stringHashCode } from '../../lib/utils/index.ts';
 import { createFaker } from '../base-application/support/index.ts';
@@ -26,9 +26,9 @@ import type { Application as SpringDataRelationalApplication } from '../spring-b
 import { getJdbcUrl, getR2dbcUrl } from '../spring-boot/generators/data-relational/support/index.ts';
 import type { Application as SpringBootApplication } from '../spring-boot/index.ts';
 
-import { SERVICE_COMPLETED_SUCCESSFULLY, SERVICE_HEALTHY } from './constants.ts';
+import { SERVICE_HEALTHY } from './constants.ts';
 import { dockerFiles } from './files.ts';
-import { createDockerComposeFile, createDockerExtendedServices } from './support/index.ts';
+import { createDockerComposeFile, createDockerExtendedServices, flowHealthcheckCommands } from './support/index.ts';
 import type {
   Application as DockerApplication,
   Config as DockerConfig,
@@ -175,6 +175,14 @@ export default class DockerGenerator extends BaseApplicationGenerator<Applicatio
           context: application,
         });
       },
+      writeDockerComposeFiles({ application }) {
+        // The files were written from their templates: the data of the application is merged into them.
+        for (const [fileName, { data }] of Object.entries(application.dockerComposeFiles)) {
+          const destination = `${application.dockerServicesDir}${fileName}.yml`;
+          this.mergeDestinationYaml(destination, data);
+          this.editFile(destination, flowHealthcheckCommands);
+        }
+      },
     });
   }
 
@@ -192,13 +200,8 @@ export default class DockerGenerator extends BaseApplicationGenerator<Applicatio
               { serviceName },
               { serviceFile: './cassandra.yml', serviceName: 'cassandra-migration' },
             );
-            source.addDockerDependencyToApplication!(
-              { serviceName, condition: SERVICE_HEALTHY },
-              { serviceName: 'cassandra-migration', condition: SERVICE_COMPLETED_SUCCESSFULLY },
-            );
           } else {
             source.addDockerExtendedServiceToApplicationAndServices!({ serviceName });
-            source.addDockerDependencyToApplication!({ serviceName, condition: SERVICE_HEALTHY });
           }
         }
 
@@ -207,7 +210,6 @@ export default class DockerGenerator extends BaseApplicationGenerator<Applicatio
           const profiles = application.prodDatabaseType === application.devDatabaseType ? undefined : ['', 'prod'];
           source.addDockerExtendedServiceToApplication!({ serviceName });
           source.addDockerExtendedServiceToServices!({ serviceName, additionalConfig: { profiles } });
-          source.addDockerDependencyToApplication!({ serviceName, condition: SERVICE_HEALTHY });
         }
 
         for (const serviceName of intersection(
@@ -215,7 +217,6 @@ export default class DockerGenerator extends BaseApplicationGenerator<Applicatio
           application.dockerServices,
         )) {
           source.addDockerExtendedServiceToApplicationAndServices!({ serviceName });
-          source.addDockerDependencyToApplication!({ serviceName, condition: SERVICE_HEALTHY });
         }
 
         for (const serviceName of application.dockerServices.filter(service => ['redis', 'memcached', 'pulsar'].includes(service))) {
@@ -237,8 +238,6 @@ export default class DockerGenerator extends BaseApplicationGenerator<Applicatio
               depends_on,
             },
           });
-
-          source.addDockerDependencyToApplication!({ serviceName: 'jhipster-registry', condition: SERVICE_HEALTHY });
         }
         if (application.dockerServices.includes('consul')) {
           source.addDockerExtendedServiceToApplicationAndServices!(

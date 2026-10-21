@@ -17,7 +17,8 @@
  * limitations under the License.
  */
 
-import { get, set } from 'lodash-es';
+import get from 'lodash-es/get.js';
+import set from 'lodash-es/set.js';
 
 import type CoreGenerator from '../../../../base-core/index.ts';
 import { type MavenProjectLike, formatPomFirstLevel, sortPomProject } from '../internal/pom-sort.ts';
@@ -119,9 +120,20 @@ const reorderDependency = <Dependency extends MavenDependency = MavenDependency>
   ...rest
 }: Dependency): Dependency => ({ inProfile, groupId, artifactId, version, type, scope, classifier, ...rest }) as Dependency;
 
+const emptyPomFile = `<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+</project>
+`;
+
 export default class PomStorage extends XmlStorage {
-  constructor({ saveFile, loadFile, sortFile }: { saveFile: (content: string) => void; loadFile: () => string; sortFile?: boolean }) {
-    super({ saveFile, loadFile, sortFile });
+  override serializeContent(fullStore: Record<string, any>): string {
+    return formatPomFirstLevel(super.serializeContent(fullStore));
+  }
+
+  override defaultContent(): Record<string, any> {
+    return this.parseContent(emptyPomFile);
   }
 
   addProperty({ inProfile, property, value = null }: MavenProperty) {
@@ -242,24 +254,5 @@ export default class PomStorage extends XmlStorage {
   }
 }
 
-const emptyPomFile = `<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-</project>
-`;
-
-export const createPomStorage = (generator: CoreGenerator, { sortFile }: { sortFile?: boolean } = {}) => {
-  const loadFile = () => generator.readDestination('pom.xml', { defaults: emptyPomFile });
-  const pomStorage = new PomStorage({
-    loadFile,
-    saveFile: content => generator.writeDestination('pom.xml', formatPomFirstLevel(content)),
-    sortFile,
-  });
-  generator.fs.store.on('change', filename => {
-    if (filename === generator.destinationPath('pom.xml')) {
-      pomStorage.clearCache();
-    }
-  });
-  return pomStorage;
-};
+export const createPomStorage = (generator: CoreGenerator, { sortFile }: { sortFile?: boolean } = {}) =>
+  new PomStorage(generator.fs, generator.destinationPath('pom.xml'), { sortFile });

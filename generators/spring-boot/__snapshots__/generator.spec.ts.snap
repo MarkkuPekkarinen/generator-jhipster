@@ -225,6 +225,7 @@ exports[`generator - spring-boot with jwt should match application snapshot 1`] 
     "SPRING_PROFILES_ACTIVE": "prod,api-docs,secret-samples",
     "_JAVA_OPTIONS": "-Xmx512m -Xms256m",
   },
+  "dockerComposeFiles": Any<Object>,
   "dockerContainers": {
     "apache/kafka-native": "apache-kafka-native-placeholder",
     "apachepulsar/pulsar": "apachepulsar-pulsar-placeholder",
@@ -346,6 +347,13 @@ exports[`generator - spring-boot with jwt should match application snapshot 1`] 
     "zipkinImage": "zipkin-image-placeholder",
     "zipkinTag": "zipkin-tag-placeholder",
   },
+  "dockerDeploymentEnvironment": {
+    "SPRING_DATASOURCE_PASSWORD": "",
+    "SPRING_DATASOURCE_URL": "jdbc:postgresql://jhipster-postgresql:5432/jhipster",
+    "SPRING_DATASOURCE_USERNAME": "jhipster",
+    "SPRING_LIQUIBASE_URL": "jdbc:postgresql://jhipster-postgresql:5432/jhipster",
+  },
+  "dockerDeploymentServicePrefix": "jhipster-",
   "dockerServices": [],
   "dockerServicesDir": "src/main/docker/",
   "documentationArchiveUrl": "https://www.jhipster.tech/documentation-archive/vJHIPSTER_VERSION",
@@ -1109,6 +1117,7 @@ exports[`generator - spring-boot with oauth2 should match application snapshot 1
     "SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_SECRET": "web_app",
     "_JAVA_OPTIONS": "-Xmx512m -Xms256m",
   },
+  "dockerComposeFiles": Any<Object>,
   "dockerContainers": {
     "apache/kafka-native": "apache-kafka-native-placeholder",
     "apachepulsar/pulsar": "apachepulsar-pulsar-placeholder",
@@ -1230,6 +1239,13 @@ exports[`generator - spring-boot with oauth2 should match application snapshot 1
     "zipkinImage": "zipkin-image-placeholder",
     "zipkinTag": "zipkin-tag-placeholder",
   },
+  "dockerDeploymentEnvironment": {
+    "SPRING_DATASOURCE_PASSWORD": "",
+    "SPRING_DATASOURCE_URL": "jdbc:postgresql://jhipster-postgresql:5432/jhipster",
+    "SPRING_DATASOURCE_USERNAME": "jhipster",
+    "SPRING_LIQUIBASE_URL": "jdbc:postgresql://jhipster-postgresql:5432/jhipster",
+  },
+  "dockerDeploymentServicePrefix": "jhipster-",
   "dockerServices": [],
   "dockerServicesDir": "src/main/docker/",
   "documentationArchiveUrl": "https://www.jhipster.tech/documentation-archive/vJHIPSTER_VERSION",

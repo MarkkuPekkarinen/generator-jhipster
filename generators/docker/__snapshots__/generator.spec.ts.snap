@@ -20,11 +20,7 @@ services:
     ports:
       - 127.0.0.1:8080:8080
     healthcheck:
-      test:
-        - CMD-SHELL
-        - "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \\"GET
-          /management/health HTTP/1.0\\\\r\\\\nHost: localhost\\\\r\\\\n\\\\r\\\\n\\" >&3;
-          grep -q \\"\\\\\\"status\\\\\\":\\\\\\"UP\\\\\\"\\" <&3'"
+      test: [ 'CMD-SHELL', 'bash -c ''exec 3<>/dev/tcp/127.0.0.1/8080; printf "GET /management/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n" >&3; grep -q "\\"status\\":\\"UP\\"" <&3''' ]
       interval: 5s
       timeout: 5s
       retries: 40
@@ -155,11 +151,7 @@ services:
     ports:
       - 127.0.0.1:8080:8080
     healthcheck:
-      test:
-        - CMD-SHELL
-        - "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \\"GET
-          /management/health HTTP/1.0\\\\r\\\\nHost: localhost\\\\r\\\\n\\\\r\\\\n\\" >&3;
-          grep -q \\"\\\\\\"status\\\\\\":\\\\\\"UP\\\\\\"\\" <&3'"
+      test: [ 'CMD-SHELL', 'bash -c ''exec 3<>/dev/tcp/127.0.0.1/8080; printf "GET /management/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n" >&3; grep -q "\\"status\\":\\"UP\\"" <&3''' ]
       interval: 5s
       timeout: 5s
       retries: 40
@@ -281,11 +273,7 @@ services:
     ports:
       - 127.0.0.1:8080:8080
     healthcheck:
-      test:
-        - CMD-SHELL
-        - "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \\"GET
-          /management/health HTTP/1.0\\\\r\\\\nHost: localhost\\\\r\\\\n\\\\r\\\\n\\" >&3;
-          grep -q \\"\\\\\\"status\\\\\\":\\\\\\"UP\\\\\\"\\" <&3'"
+      test: [ 'CMD-SHELL', 'bash -c ''exec 3<>/dev/tcp/127.0.0.1/8080; printf "GET /management/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n" >&3; grep -q "\\"status\\":\\"UP\\"" <&3''' ]
       interval: 5s
       timeout: 5s
       retries: 40
@@ -399,11 +387,7 @@ services:
     ports:
       - 127.0.0.1:8080:8080
     healthcheck:
-      test:
-        - CMD-SHELL
-        - "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \\"GET
-          /management/health HTTP/1.0\\\\r\\\\nHost: localhost\\\\r\\\\n\\\\r\\\\n\\" >&3;
-          grep -q \\"\\\\\\"status\\\\\\":\\\\\\"UP\\\\\\"\\" <&3'"
+      test: [ 'CMD-SHELL', 'bash -c ''exec 3<>/dev/tcp/127.0.0.1/8080; printf "GET /management/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n" >&3; grep -q "\\"status\\":\\"UP\\"" <&3''' ]
       interval: 5s
       timeout: 5s
       retries: 40
@@ -529,11 +513,7 @@ services:
       - SPRING_LIQUIBASE_URL=jdbc:oracle:thin:@oracle:1521:jhipster
       - SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS=kafka:9092
     healthcheck:
-      test:
-        - CMD-SHELL
-        - "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8081; printf \\"GET
-          /management/health HTTP/1.0\\\\r\\\\nHost: localhost\\\\r\\\\n\\\\r\\\\n\\" >&3;
-          grep -q \\"\\\\\\"status\\\\\\":\\\\\\"UP\\\\\\"\\" <&3'"
+      test: [ 'CMD-SHELL', 'bash -c ''exec 3<>/dev/tcp/127.0.0.1/8081; printf "GET /management/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n" >&3; grep -q "\\"status\\":\\"UP\\"" <&3''' ]
       interval: 5s
       timeout: 5s
       retries: 40
@@ -615,11 +595,7 @@ services:
       - SPRING_ELASTICSEARCH_URIS=http://elasticsearch:9200
       - SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS=kafka:9092
     healthcheck:
-      test:
-        - CMD-SHELL
-        - "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8081; printf \\"GET
-          /management/health HTTP/1.0\\\\r\\\\nHost: localhost\\\\r\\\\n\\\\r\\\\n\\" >&3;
-          grep -q \\"\\\\\\"status\\\\\\":\\\\\\"UP\\\\\\"\\" <&3'"
+      test: [ 'CMD-SHELL', 'bash -c ''exec 3<>/dev/tcp/127.0.0.1/8081; printf "GET /management/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n" >&3; grep -q "\\"status\\":\\"UP\\"" <&3''' ]
       interval: 5s
       timeout: 5s
       retries: 40
@@ -737,11 +713,7 @@ services:
       - SPRING_LIQUIBASE_URL=jdbc:sqlserver://mssql:1433;database=jhipster;encrypt=false
       - JHIPSTER_CACHE_MEMCACHED_SERVERS=memcached:11211
     healthcheck:
-      test:
-        - CMD-SHELL
-        - "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8081; printf \\"GET
-          /management/health HTTP/1.0\\\\r\\\\nHost: localhost\\\\r\\\\n\\\\r\\\\n\\" >&3;
-          grep -q \\"\\\\\\"status\\\\\\":\\\\\\"UP\\\\\\"\\" <&3'"
+      test: [ 'CMD-SHELL', 'bash -c ''exec 3<>/dev/tcp/127.0.0.1/8081; printf "GET /management/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n" >&3; grep -q "\\"status\\":\\"UP\\"" <&3''' ]
       interval: 5s
       timeout: 5s
       retries: 40
@@ -850,11 +822,7 @@ services:
       - SPRING_PULSAR_CLIENT_SERVICE_URL=pulsar://pulsar:6650
       - SPRING_PULSAR_ADMINISTRATION_SERVICE_URL=http://pulsar:8080
     healthcheck:
-      test:
-        - CMD-SHELL
-        - "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8081; printf \\"GET
-          /management/health HTTP/1.0\\\\r\\\\nHost: localhost\\\\r\\\\n\\\\r\\\\n\\" >&3;
-          grep -q \\"\\\\\\"status\\\\\\":\\\\\\"UP\\\\\\"\\" <&3'"
+      test: [ 'CMD-SHELL', 'bash -c ''exec 3<>/dev/tcp/127.0.0.1/8081; printf "GET /management/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n" >&3; grep -q "\\"status\\":\\"UP\\"" <&3''' ]
       interval: 5s
       timeout: 5s
       retries: 40
@@ -989,11 +957,7 @@ services:
     ports:
       - 127.0.0.1:8080:8080
     healthcheck:
-      test:
-        - CMD-SHELL
-        - "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \\"GET
-          /management/health HTTP/1.0\\\\r\\\\nHost: localhost\\\\r\\\\n\\\\r\\\\n\\" >&3;
-          grep -q \\"\\\\\\"status\\\\\\":\\\\\\"UP\\\\\\"\\" <&3'"
+      test: [ 'CMD-SHELL', 'bash -c ''exec 3<>/dev/tcp/127.0.0.1/8080; printf "GET /management/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n" >&3; grep -q "\\"status\\":\\"UP\\"" <&3''' ]
       interval: 5s
       timeout: 5s
       retries: 40
@@ -1087,11 +1051,7 @@ services:
     ports:
       - 127.0.0.1:8080:8080
     healthcheck:
-      test:
-        - CMD-SHELL
-        - "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \\"GET
-          /management/health HTTP/1.0\\\\r\\\\nHost: localhost\\\\r\\\\n\\\\r\\\\n\\" >&3;
-          grep -q \\"\\\\\\"status\\\\\\":\\\\\\"UP\\\\\\"\\" <&3'"
+      test: [ 'CMD-SHELL', 'bash -c ''exec 3<>/dev/tcp/127.0.0.1/8080; printf "GET /management/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n" >&3; grep -q "\\"status\\":\\"UP\\"" <&3''' ]
       interval: 5s
       timeout: 5s
       retries: 40
@@ -1222,11 +1182,7 @@ services:
     ports:
       - 127.0.0.1:8080:8080
     healthcheck:
-      test:
-        - CMD-SHELL
-        - "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \\"GET
-          /management/health HTTP/1.0\\\\r\\\\nHost: localhost\\\\r\\\\n\\\\r\\\\n\\" >&3;
-          grep -q \\"\\\\\\"status\\\\\\":\\\\\\"UP\\\\\\"\\" <&3'"
+      test: [ 'CMD-SHELL', 'bash -c ''exec 3<>/dev/tcp/127.0.0.1/8080; printf "GET /management/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n" >&3; grep -q "\\"status\\":\\"UP\\"" <&3''' ]
       interval: 5s
       timeout: 5s
       retries: 40
@@ -1323,11 +1279,7 @@ services:
     ports:
       - 127.0.0.1:8080:8080
     healthcheck:
-      test:
-        - CMD-SHELL
-        - "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \\"GET
-          /management/health HTTP/1.0\\\\r\\\\nHost: localhost\\\\r\\\\n\\\\r\\\\n\\" >&3;
-          grep -q \\"\\\\\\"status\\\\\\":\\\\\\"UP\\\\\\"\\" <&3'"
+      test: [ 'CMD-SHELL', 'bash -c ''exec 3<>/dev/tcp/127.0.0.1/8080; printf "GET /management/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n" >&3; grep -q "\\"status\\":\\"UP\\"" <&3''' ]
       interval: 5s
       timeout: 5s
       retries: 40
@@ -1466,11 +1418,7 @@ services:
     ports:
       - 127.0.0.1:8080:8080
     healthcheck:
-      test:
-        - CMD-SHELL
-        - "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \\"GET
-          /management/health HTTP/1.0\\\\r\\\\nHost: localhost\\\\r\\\\n\\\\r\\\\n\\" >&3;
-          grep -q \\"\\\\\\"status\\\\\\":\\\\\\"UP\\\\\\"\\" <&3'"
+      test: [ 'CMD-SHELL', 'bash -c ''exec 3<>/dev/tcp/127.0.0.1/8080; printf "GET /management/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n" >&3; grep -q "\\"status\\":\\"UP\\"" <&3''' ]
       interval: 5s
       timeout: 5s
       retries: 40
@@ -1581,11 +1529,7 @@ services:
     ports:
       - 127.0.0.1:8080:8080
     healthcheck:
-      test:
-        - CMD-SHELL
-        - "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \\"GET
-          /management/health HTTP/1.0\\\\r\\\\nHost: localhost\\\\r\\\\n\\\\r\\\\n\\" >&3;
-          grep -q \\"\\\\\\"status\\\\\\":\\\\\\"UP\\\\\\"\\" <&3'"
+      test: [ 'CMD-SHELL', 'bash -c ''exec 3<>/dev/tcp/127.0.0.1/8080; printf "GET /management/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n" >&3; grep -q "\\"status\\":\\"UP\\"" <&3''' ]
       interval: 5s
       timeout: 5s
       retries: 40

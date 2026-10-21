@@ -18,8 +18,8 @@
  */
 
 import chalk from 'chalk';
-import { padEnd } from 'lodash-es';
 
+import { padEnd } from '../../lib/utils/string-utils.ts';
 import BaseApplicationGenerator from '../base-application/index.ts';
 import { PRIORITY_NAMES } from '../base-application/priorities.ts';
 import type { Config as ClientConfig } from '../client/types.ts';
@@ -175,7 +175,8 @@ export default class LanguagesGenerator extends BaseApplicationGenerator<
   get loading() {
     return this.asLoadingTaskGroup({
       prepareForTemplates({ application }) {
-        if (application.enableTranslation) {
+        // The defaults of the configuration reach the application at preparing, after loading.
+        if (application.enableTranslation ?? this.jhipsterConfigWithDefaults.enableTranslation) {
           if (!this.languageCommand || this.regenerateLanguages) {
             this.languagesToApply = application.languages;
           } else {

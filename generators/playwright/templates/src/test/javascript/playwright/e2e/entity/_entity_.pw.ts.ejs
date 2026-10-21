@@ -34,7 +34,6 @@ import {
 import { test, expect } from '../../support/fixtures';
 <%_ const baseApi = `${entityApi}api/`;
 
-    const entityFakeData = generateFakeData('cypress');
     const requiredRelationships = relationships.filter(rel => rel.relationshipRequired || rel.id);
     const requiredOtherEntities = [...new Set(requiredRelationships.map(rel => rel.otherEntity))];
     const otherEntities = [...new Set(Object.values(differentRelationships).filter(rels => rels.length > 0).map(rels => rels[0].otherEntity))];
@@ -42,29 +41,27 @@ import { test, expect } from '../../support/fixtures';
     const skipCreateTest = [
       !playwrightBootstrapEntities,
       // Cannot create a required relationship with itself.
-      requiredRelationships.some(rel => rel.otherEntity.builtInUser || rel.otherEntity === this.entity),
+      requiredRelationships.some(rel => rel.otherEntity.builtInUser),
       // Required relationships that contain another required relationship are complex to handle.
       requiredOtherEntities.some(otherEntity => otherEntity.relationships.some(rel => rel.relationshipRequired)),
       // Same as above.
       requiredOtherEntities.some(otherEntity => otherEntity.primaryKey?.derived),
       // Cannot generate the required data to test.
-      !entityFakeData,
+      !e2eFakeData,
     ].some(Boolean) ? '.skip' : '';
 
     const reason = 'cannot create a required entity with relationship with required relationships.';
-
-    const sampleFields = fields.filter(f => !f.autoGenerate && !f.nullable);
 
     // Only the image fields use the jhi fixture in the create test; destructuring it otherwise
     // leaves an unused parameter, which is an error in the generated application's eslint config.
     const createTestFields = fields.filter(field => (!field.id || !field.autoGenerate) && !field.hidden && !field.readonly);
     const createTestBinaryFields = createTestFields.filter(field => field.fieldTypeBinary && !field.blobContentTypeText);
-    const createTestUsesFixture = createTestBinaryFields.some(field => (entityFakeData ? entityFakeData[field.fieldName] : field.generateFakeData('cypress')) !== undefined);
+    const createTestUsesFixture = createTestBinaryFields.some(field => e2eFieldsFakeData[field.fieldName] !== undefined);
 _%>
 
 const <%- entityInstance %>PageUrl = '/<%- entityPage %>';
 <%_ if (!readOnly) { _%>
-<%- skipCreateTest ? '// ' : '' %>const <%- entityInstance %>Sample = <%- JSON.stringify(this.generateTestEntity(sampleFields)) %>;
+<%- skipCreateTest ? '// ' : '' %>const <%- entityInstance %>Sample = <%- JSON.stringify(e2eTestEntitySample) %>;
 <%_ } _%>
 
 const <%- entityInstance %>ApiUrl = '/<%- baseApi + entityApiUrl %>';
@@ -96,7 +93,7 @@ test.describe('<%- entityNameCapitalized %> e2e test', () => {
       await jhi.authenticatedRequest({
         method: 'POST',
         url: '/<%- baseApi + otherEntity.entityApiUrl %>',
-        body: <%- JSON.stringify(this.generateTestEntity(otherEntity.fields.filter(f => !f.autoGenerate))) %>,
+        body: <%- JSON.stringify(otherEntity.e2eTestEntity) %>,
       })
     ).json();
   <%_ } _%>
@@ -319,7 +316,7 @@ test.describe('<%- entityNameCapitalized %> e2e test', () => {
     test<%- skipCreateTest %>('should create an instance of <%- entityNameCapitalized %>', async ({ page<%- createTestUsesFixture ? ', jhi' : '' %> }) => {
   <%_ for (const field of fields.filter(field => (!field.id || !field.autoGenerate) && !field.hidden && !field.readonly)) { _%>
     <%_ const { fieldName, fieldIsEnum } = field;
-        let fieldValue = entityFakeData ? entityFakeData[field.fieldName] : field.generateFakeData('cypress');
+        let fieldValue = e2eFieldsFakeData[field.fieldName];
         if (fieldValue === undefined) {
           continue;
         }

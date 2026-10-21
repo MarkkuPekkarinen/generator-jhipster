@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { before, describe, expect, it } from 'esmocha';
+import { before, describe, expect, it } from 'expect-node';
 
 import type Generator from './generator.ts';
 
@@ -56,6 +56,35 @@ describe(`generator - ${helpers.commandName}`, () => {
         expect(result.application).toMatchObject({
           clientBundler: 'vite',
         });
+      });
+    });
+  });
+
+  describe('with an application type of a blueprint', () => {
+    describe('composing', () => {
+      before(async () => {
+        await helpers
+          .runJHipster()
+          .withMockedJHipsterGenerators()
+          // @ts-expect-error a type a blueprint declares, out of the official ones
+          .withJHipsterConfig({ applicationType: 'expo' });
+      });
+
+      it('should not compose with the generators of the application', () => {
+        result.assertGeneratorNotComposed('jhipster:common');
+        result.assertGeneratorNotComposed('jhipster:server');
+        result.assertGeneratorNotComposed('jhipster:client');
+      });
+    });
+
+    describe('writing', () => {
+      before(async () => {
+        // @ts-expect-error a type a blueprint declares, out of the official ones
+        await helpers.runJHipster().withJHipsterConfig({ applicationType: 'expo' });
+      });
+
+      it('should write the config and the package.json only', () => {
+        expect(Object.keys(result.getStateSnapshot()).sort()).toEqual(['.yo-rc.json', 'package.json']);
       });
     });
   });

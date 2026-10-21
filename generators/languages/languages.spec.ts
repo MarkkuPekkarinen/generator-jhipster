@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-import { before, describe, it } from 'esmocha';
+import { before, describe, it } from 'expect-node';
 import { basename } from 'node:path';
 
 import { CLIENT_MAIN_SRC_DIR } from '../generator-constants.ts';
@@ -110,6 +110,16 @@ const containsLanguageInVueStore = (languageValue: string) => {
 };
 
 describe('generator - languages', () => {
+  describe('with languages and no enableTranslation in the configuration', () => {
+    before(async () => {
+      await dryRunHelpers
+        .runJHipster('app')
+        .withMockedGenerators(['jhipster:server'])
+        .withJHipsterConfig({ nativeLanguage: 'en', languages: ['en', 'pt-br'] });
+    });
+    containsLanguageFiles('en');
+    containsLanguageFiles('pt-br');
+  });
   describe('Creates default i18n files', () => {
     supportedLanguages.forEach(language => {
       describe(`with prompts for ${language.name}`, () => {

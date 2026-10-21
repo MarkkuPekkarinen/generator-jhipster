@@ -17,17 +17,15 @@
  limitations under the License.
 -%>
 # This configuration is intended for development purpose, it's **your** responsibility to harden it for production
-name: <%- baseName.toLowerCase() %>
+# The postgresql service stores its data in /var/lib/postgresql/data/ of its Docker container: to keep it in a folder of your machine,
+# add to the postgresql service:
+#   volumes:
+#     - <folder-of-your-machine>:/var/lib/postgresql/data/
+name: jhipster
 services:
   postgresql:
-    image: <%- dockerContainers.postgresql %>
-    # volumes:
-    #   - ~/volumes/jhipster/<%- baseName %>/postgresql/:/var/lib/postgresql/data/
+    image: postgres
     environment:
-      - POSTGRES_USER=<%- baseName %>
-<%_ if (locals.prodDatabasePassword) { _%>
-      - POSTGRES_PASSWORD=<%- locals.prodDatabasePassword %>
-<%_ } _%>
       - POSTGRES_HOST_AUTH_METHOD=trust
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER}']

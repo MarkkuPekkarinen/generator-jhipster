@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { before, describe, expect, it } from 'esmocha';
+import { before, describe, expect, it } from 'expect-node';
 import { basename } from 'node:path';
 
 import { cacheTypes, databaseTypes, searchEngineTypes, serviceDiscoveryTypes } from '../../lib/jhipster/index.ts';
@@ -111,6 +111,34 @@ describe(`generator - ${generator}`, () => {
       it('should not generate any file inside src/', () => {
         expect(Object.keys(runResult.getStateSnapshot('**/src/**'))).toHaveLength(0);
       });
+    });
+  });
+  describe('deployment services', () => {
+    before(async () => {
+      await helpers
+        .runJHipster(generator)
+        .withJHipsterConfig({ prodDatabaseType: POSTGRESQL, cacheProvider: REDIS, authenticationType: 'oauth2' });
+    });
+
+    it('should name the services of the application with the prefix, the shared ones unprefixed', () => {
+      const { dockerComposeFiles } = runResult.application! as any;
+      expect(Object.keys(dockerComposeFiles.postgresql.deploymentServices)).toEqual(['jhipster-postgresql']);
+      expect(dockerComposeFiles.app.deploymentServices.jhipster.depends_on).toEqual({
+        'jhipster-postgresql': { condition: 'service_healthy' },
+        keycloak: { condition: 'service_healthy' },
+      });
+    });
+
+    it('should give the application the hosts of the deployment', () => {
+      const { environment } = (runResult.application! as any).dockerComposeFiles.app.deploymentServices.jhipster;
+      expect(environment).toContain('SPRING_DATASOURCE_URL=jdbc:postgresql://jhipster-postgresql:5432/jhipster');
+      expect(environment).toContain('JHIPSTER_CACHE_REDIS_SERVER=redis://jhipster-redis:6379');
+    });
+
+    it('should keep the hosts of the services in the docker compose files of the application', () => {
+      const app = runResult.fs.read(`${runResult.cwd}/src/main/docker/app.yml`);
+      expect(app).toContain('SPRING_DATASOURCE_URL=jdbc:postgresql://postgresql:5432/jhipster');
+      expect(app).toMatch(/^ {6}postgresql:$/m);
     });
   });
 });
